@@ -19,7 +19,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jersey")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-
+    implementation("javax.xml.bind:jaxb-api:2.3.0")
+    implementation("javax.activation:activation:1.1")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

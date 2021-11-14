@@ -1,7 +1,7 @@
 package rest.addressbook
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,18 +31,35 @@ class AddressBookServiceTest {
     @Test
     fun serviceIsAlive() {
         // Request the address book
-        val response = restTemplate.getForEntity("http://localhost:$port/contacts", Array<Person>::class.java)
-        assertEquals(200, response.statusCode.value())
-        assertEquals(0, response.body?.size)
+        // val response = restTemplate.getForEntity("http://localhost:$port/contacts", Array<Person>::class.java)
+        // assertEquals(200, response.statusCode.value())
+        // assertEquals(0, response.body?.size)
 
         //////////////////////////////////////////////////////////////////////
         // Verify that GET /contacts is well implemented by the service, i.e
         // complete the test to ensure that it is safe and idempotent
         //////////////////////////////////////////////////////////////////////
+
+        val tmp = addressBook.personList    //We obtain the address book.
+
+        for (i in 1..2) {
+           //We request the arraylist of persons.
+           val response = restTemplate.getForEntity("http://localhost:$port/contacts", Array<Person>::class.java)
+           //We check the response is correct in status code and size.
+           assertEquals(200, response.statusCode.value())
+           assertEquals(0, response.body?.size)
+
+       }
+       //Finally we check if the saved arraylist still intact.
+       assertEquals(tmp,addressBook.personList)
     }
 
     @Test
     fun createUser() {
+
+        //We saved the previous size and next id.
+        var size = addressBook.personList.size
+        var id = addressBook.nextId
 
         // Prepare data
         val juan = Person(name = "Juan")
@@ -50,29 +67,43 @@ class AddressBookServiceTest {
 
         // Create a new user
         var response = restTemplate.postForEntity("http://localhost:$port/contacts", juan, Person::class.java)
-
-        assertEquals(201, response.statusCode.value())
-        assertEquals(juanURI, response.headers.location)
-        assertEquals(MediaType.APPLICATION_JSON, response.headers.contentType)
-        var juanUpdated = response.body
-        assertEquals(juan.name, juanUpdated?.name)
-        assertEquals(1, juanUpdated?.id)
-        assertEquals(juanURI, juanUpdated?.href)
+        
+        //Checking the createUser response for Juan
+        assertEquals(201, response.statusCode.value())                          //Check the status code
+        assertEquals(juanURI, response.headers.location)                        //Check the URI   
+        assertEquals(MediaType.APPLICATION_JSON, response.headers.contentType)  //Check the media type of the content response                                       
+        assertEquals(juan.name, response.body?.name )                           //Check the response name
+        assertEquals(1, response.body?.id)                                      //Check the response id
+        assertEquals(juanURI, response.body?.href)                              //Check the response href
 
         // Check that the new user exists
         response = restTemplate.getForEntity(juanURI, Person::class.java)
 
         assertEquals(200, response.statusCode.value())
         assertEquals(MediaType.APPLICATION_JSON, response.headers.contentType)
-        juanUpdated = response.body
-        assertEquals(juan.name, juanUpdated?.name)
-        assertEquals(1, juanUpdated?.id)
-        assertEquals(juanURI, juanUpdated?.href)
+        assertEquals(juan.name, response.body?.name)
+        assertEquals(1, response.body?.id)
+        assertEquals(juanURI, response.body?.href)
 
         //////////////////////////////////////////////////////////////////////
         // Verify that POST /contacts is well implemented by the service, i.e
         // complete the test to ensure that it is not safe and not idempotent
         //////////////////////////////////////////////////////////////////////
+        assertNotEquals(addressBook.personList.size, size)
+        assertNotEquals(addressBook.nextId, id)
+
+        //checking if is idempotent
+        //saving the current state
+        size =addressBook.personList.size;
+        id = addressBook.nextId
+
+        //doing the request
+        var response2 = restTemplate.postForEntity("http://localhost:$port/contacts", juan, Person::class.java)
+        //chequing the response is different
+        assertNotEquals(response,response2)
+        //check the state has changed
+        assertNotEquals(addressBook.personList.size, size)
+        assertNotEquals(addressBook.nextId, id)
     }
 
     @Test
