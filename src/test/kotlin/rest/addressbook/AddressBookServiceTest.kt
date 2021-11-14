@@ -180,7 +180,7 @@ class AddressBookServiceTest {
         //doing the request
         val response2 = restTemplate.getForEntity("http://localhost:$port/contacts", Array<Person>::class.java)
         //chequing if the response is equal
-        assertNotEquals(response,response2)
+        assertEquals(response,response2)
 
     }
 
